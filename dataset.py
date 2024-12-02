@@ -6,6 +6,8 @@ import requests
 import tiktoken
 import numpy as np
 
+from sys import getsizeof
+
 from cosmosis.dataset import CDataset
 
 
@@ -13,11 +15,10 @@ class TinyShakes(CDataset):
     """
     https://github.com/karpathy/nanoGPT
     """
-
-    def __getitem__(self, i):         
-        ix = np.random.randint(low=0, high=len(self.ds) - self.block_size, size=(self.batch_size,))
-        X1 = np.stack([(self.ds[i:i+self.block_size]).astype(np.int64) for i in ix])
-        X2 = np.stack([(self.ds[i+1:i+1+self.block_size]).astype(np.int64) for i in ix])
+    def __getitem__(self, i):
+        
+        X1 = self.ds[i:i+self.block_size].astype(np.int64)
+        X2 = self.ds[i+1:i+1+self.block_size].astype(np.int64)
         
         _data = {'X1': X1, 'X2': X2}
         data = {}
@@ -31,12 +32,10 @@ class TinyShakes(CDataset):
         del _data
         return data
                 
-    def load_data(self, block_size, batch_size):
+    def load_data(self, block_size, n=338035):
         data_url = 'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt'
         self.enc = tiktoken.get_encoding("gpt2")
-        self.ds_idx = []
-        self.block_size = block_size
-        self.batch_size = batch_size
+        self.block_size, self.n = block_size, n
         
         if not os.path.exists('./data/tinyshakes.txt'):
             with open('./data/tinyshakes.txt', 'w', encoding='utf-8') as f:
@@ -60,4 +59,15 @@ class TinyShakes(CDataset):
         # https://stackoverflow.com/questions/45132940/\
         # numpy-memmap-memory-usage-want-to-iterate-once/61472122#61472122
         data = np.memmap('./data/tinyshakes_encoded.bin', dtype=np.uint16, mode='r')
+        ds_idx = range(len(data)-block_size) # 338035
+        if n != 338035: ds_idx = np.random.choice(ds_idx, size=n, replace=False)
+        else: self.ds_idx = ds_idx
+
+        self.ds_idx = list(ds_idx)
+    
+        print('len(self.ds_idx): ', len(self.ds_idx))
+        print('data.nbytes: ', data.nbytes)
+
+        data.flush()
         return data
+        
