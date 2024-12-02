@@ -34,7 +34,7 @@ class TinyShakes(CDataset):
                 
     def load_data(self, block_size, n=338035):
         data_url = 'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt'
-        self.enc = tiktoken.get_encoding("gpt2")
+        self.encoding = tiktoken.get_encoding("gpt2")
         self.block_size, self.n = block_size, n
         
         if not os.path.exists('./data/tinyshakes.txt'):
@@ -48,7 +48,7 @@ class TinyShakes(CDataset):
             with open('./data/tinyshakes.txt', 'r', encoding='utf-8') as f:
                 data = f.read()
             # encode with tiktoken gpt2 bpe
-            tokens = self.enc.encode_ordinary(data)
+            tokens = self.encoding.encode_ordinary(data)
             tokens = np.array(tokens, dtype=np.uint16)
             tokens.tofile('./data/tinyshakes_encoded.bin')
             print('text has been tokenized and saved in file ./data/tinyshakes_encoded.bin')
