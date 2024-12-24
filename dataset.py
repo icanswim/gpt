@@ -32,42 +32,46 @@ class TinyShakes(CDataset):
         del _data
         return data
                 
-    def load_data(self, block_size, n=338035):
+    def load_data(self, block_size=0, n=338035, prompt=None):
         data_url = 'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt'
         self.encoding = tiktoken.get_encoding("gpt2")
         self.block_size, self.n = block_size, n
-        
-        if not os.path.exists('./data/tinyshakes.txt'):
-            with open('./data/tinyshakes.txt', 'w', encoding='utf-8') as f:
-                f.write(requests.get(data_url).text)
-            print('tinyshakes.txt downloaded and saved in ../gpt/data/')
-        else:
-            print('tinyshakes.txt loaded from saved file in ../gpt/data/')
 
-        if not os.path.exists('./data/tinyshakes_encoded.bin'):
-            with open('./data/tinyshakes.txt', 'r', encoding='utf-8') as f:
-                data = f.read()
-            # encode with tiktoken gpt2 bpe
-            tokens = self.encoding.encode_ordinary(data)
-            tokens = np.array(tokens, dtype=np.uint16)
-            tokens.tofile('./data/tinyshakes_encoded.bin')
-            print('text has been tokenized and saved in file ./data/tinyshakes_encoded.bin')
-        else:
-            print('tokens loaded from file ./data/tinyskakes_encoded.bin')
-            
-        # We recreate np.memmap every batch to avoid a memory leak, as per
-        # https://stackoverflow.com/questions/45132940/\
-        # numpy-memmap-memory-usage-want-to-iterate-once/61472122#61472122
-        data = np.memmap('./data/tinyshakes_encoded.bin', dtype=np.uint16, mode='r')
-        ds_idx = range(len(data)-block_size) # 338035
-        if n != 338035: ds_idx = np.random.choice(ds_idx, size=n, replace=False)
-        else: self.ds_idx = ds_idx
-
-        self.ds_idx = list(ds_idx)
+        if prompt == None:
+            if not os.path.exists('./data/tinyshakes.txt'):
+                with open('./data/tinyshakes.txt', 'w', encoding='utf-8') as f:
+                    f.write(requests.get(data_url).text)
+                print('tinyshakes.txt downloaded and saved in ../gpt/data/')
+            else:
+                print('tinyshakes.txt loaded from saved file in ../gpt/data/')
     
+            if not os.path.exists('./data/tinyshakes_encoded.bin'):
+                with open('./data/tinyshakes.txt', 'r', encoding='utf-8') as f:
+                    data = f.read()
+                # encode with tiktoken gpt2 bpe
+                tokens = self.encoding.encode_ordinary(data)
+                tokens = np.array(tokens, dtype=np.uint16)
+                tokens.tofile('./data/tinyshakes_encoded.bin')
+                print('text has been tokenized and saved in file ./data/tinyshakes_encoded.bin')
+            else:
+                print('tokens loaded from file ./data/tinyskakes_encoded.bin')
+                
+            # We recreate np.memmap every batch to avoid a memory leak, as per
+            # https://stackoverflow.com/questions/45132940/\
+            # numpy-memmap-memory-usage-want-to-iterate-once/61472122#61472122
+            data = np.memmap('./data/tinyshakes_encoded.bin', dtype=np.uint16, mode='r')
+            ds_idx = list(range(len(data)-block_size)) # 338035
+            if n != 338035: 
+                ds_idx = list(np.random.choice(ds_idx, size=n, replace=False))
+            data.flush()
+        else:
+            # encode the prompt with tiktoken gpt2 bpe
+            tokens = self.encoding.encode_ordinary(prompt)
+            ds_idx = [0]
+            data = np.array(tokens, dtype=np.uint16)
+            
+        self.ds_idx = ds_idx
         print('len(self.ds_idx): ', len(self.ds_idx))
         print('data.nbytes: ', data.nbytes)
-
-        data.flush()
         return data
         
