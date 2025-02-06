@@ -17,10 +17,11 @@ class TinyShakes(CDataset):
     """
     def __getitem__(self, i):
         
-        X1 = self.ds[i:i+self.block_size].astype(np.int64)
-        X2 = self.ds[i+1:i+1+self.block_size].astype(np.int64)
+        X = self.ds[i:i+self.d_seq].astype(np.int64)
+        y = self.ds[i+1:i+1+self.d_seq].astype(np.int64)
+        pos = np.arange(0, self.d_seq, dtype=np.int64) 
         
-        _data = {'X1': X1, 'X2': X2}
+        _data = {'tokens': X, 'y': y, 'position': pos}
         data = {}
         
         for feature, Transforms in self.transforms.items():
@@ -31,11 +32,18 @@ class TinyShakes(CDataset):
             
         del _data
         return data
-                
-    def load_data(self, block_size=0, n=338035, prompt=None):
+
+    def prompt(self, prompt):
+        # encode the prompt with tiktoken gpt2 bpe
+        tokens = self.encoding.encode_ordinary(prompt)
+        ds_idx = [0]
+        ds = np.array(tokens, dtype=np.uint16)
+        return ds
+             
+    def load_data(self, d_seq=0, n=338035, prompt=None):
         data_url = 'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt'
         self.encoding = tiktoken.get_encoding("gpt2")
-        self.block_size, self.n = block_size, n
+        self.d_seq, self.n = d_seq, n
 
         if prompt == None:
             if not os.path.exists('./data/tinyshakes.txt'):
@@ -59,19 +67,17 @@ class TinyShakes(CDataset):
             # We recreate np.memmap every batch to avoid a memory leak, as per
             # https://stackoverflow.com/questions/45132940/\
             # numpy-memmap-memory-usage-want-to-iterate-once/61472122#61472122
-            data = np.memmap('./data/tinyshakes_encoded.bin', dtype=np.uint16, mode='r')
-            ds_idx = list(range(len(data)-block_size)) # 338035
+            ds = np.memmap('./data/tinyshakes_encoded.bin', dtype=np.uint16, mode='r')
+            ds_idx = list(range(len(ds)-d_seq)) # 338035
             if n != 338035: 
                 ds_idx = list(np.random.choice(ds_idx, size=n, replace=False))
-            data.flush()
+            ds.flush()
+            self.ds_idx = ds_idx
         else:
-            # encode the prompt with tiktoken gpt2 bpe
-            tokens = self.encoding.encode_ordinary(prompt)
-            ds_idx = [0]
-            data = np.array(tokens, dtype=np.uint16)
-            
-        self.ds_idx = ds_idx
+            ds = self.prompt(prompt)
+            self.ds_idx = [0]
+        
         print('len(self.ds_idx): ', len(self.ds_idx))
-        print('data.nbytes: ', data.nbytes)
-        return data
+        print('data.nbytes: ', ds.nbytes)
+        return ds
         
