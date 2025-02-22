@@ -36,7 +36,6 @@ class TinyShakes(CDataset):
     def prompt(self, prompt):
         # encode the prompt with tiktoken gpt2 bpe
         tokens = self.encoding.encode_ordinary(prompt)
-        ds_idx = [0]
         ds = np.array(tokens, dtype=np.uint16)
         return ds
              
