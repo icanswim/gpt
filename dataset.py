@@ -55,6 +55,7 @@ class TinyShakes(CDataset):
             if not os.path.exists('./data/tinyshakes_encoded.bin'):
                 with open('./data/tinyshakes.txt', 'r', encoding='utf-8') as f:
                     data = f.read()
+                    data = data.strip()
                 # encode with tiktoken gpt2 bpe
                 tokens = self.encoding.encode_ordinary(data)
                 tokens = np.array(tokens, dtype=np.uint16)
@@ -63,9 +64,6 @@ class TinyShakes(CDataset):
             else:
                 print('tokens loaded from file ./data/tinyskakes_encoded.bin')
                 
-            # We recreate np.memmap every batch to avoid a memory leak, as per
-            # https://stackoverflow.com/questions/45132940/\
-            # numpy-memmap-memory-usage-want-to-iterate-once/61472122#61472122
             ds = np.memmap('./data/tinyshakes_encoded.bin', dtype=np.uint16, mode='r')
             ds_idx = list(range(len(ds)-d_seq)) # 338035
             if n != 338035: 
