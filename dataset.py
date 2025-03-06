@@ -67,7 +67,7 @@ class TinyShakes(CDataset):
                 print('tokens loaded from file {}'.format(tiny_bin))
                 
             ds = np.memmap(tiny_bin, dtype=np.uint16, mode='r')
-            ds_idx = list(range(ds.shape[-1])) # 338035
+            ds_idx = list(range(ds.shape[-1]-self.d_seq)) # 338035
             if n != 338035: 
                  ds_idx = list(np.random.choice(ds_idx, size=n, replace=False))
             ds.flush()
