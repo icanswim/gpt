@@ -8,38 +8,13 @@ import numpy as np
 
 from sys import getsizeof
 
-from cosmosis.dataset import CDataset
+from cosmosis.dataset import TDataset
 
 
-class TinyShakes(CDataset):
+class TinyShakes(TDataset):
     """
     https://github.com/karpathy/nanoGPT
-    """
-    def __getitem__(self, i):
-        
-        X = self.ds[i:i+self.d_seq].astype(np.int64)
-        y = self.ds[i+1:i+1+self.d_seq].astype(np.int64)
-        pos = np.arange(0, self.d_seq, dtype=np.int64) 
-        
-        _data = {'tokens': X, 'y': y, 'position': pos}
-        data = {}
-        
-        for feature, Transforms in self.transforms.items():
-            out = _data[feature]
-            for T in Transforms:
-                out = T(out)
-            data[feature] = out
-            
-        del _data
-        return data
-
-    def prompt(self, prompt):
-        # encode the prompt with tiktoken gpt2 bpe
-        tokens = self.encoding.encode_ordinary(prompt)
-        ds = np.array(tokens, dtype=np.uint16)
-        self.d_seq = ds.shape[-1]
-        return ds
-             
+    """      
     def load_data(self, d_seq=1, n=338035, prompt=None):
         data_url = 'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt'
         self.encoding = tiktoken.get_encoding("gpt2")
