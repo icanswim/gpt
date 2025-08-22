@@ -52,6 +52,6 @@ class TinyShakes(TDataset):
             self.ds_idx = [0]
 
         print('len(self.ds_idx): ', len(self.ds_idx))
-        print('data.nbytes: ', ds.nbytes)
+        print('ds.nbytes: ', ds.nbytes)
         return ds
         
