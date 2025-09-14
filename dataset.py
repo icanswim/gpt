@@ -15,9 +15,9 @@ class TinyShakes(TDataset):
     """
     https://github.com/karpathy/nanoGPT
     """      
-    def load_data(self, d_seq=1, n=338035, prompt=None):
+    def load_data(self, d_seq=1, n=338035, prompt=None, tokenizer=tiktoken):
         data_url = 'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt'
-        self.encoding = tiktoken.get_encoding("gpt2")
+        self.encoding = tokenizer.get_encoding("gpt2")
         self.d_seq, self.n = d_seq, n
         tiny_bin = './data/tinyshakes_stripped_encoded.bin'
 
@@ -43,15 +43,14 @@ class TinyShakes(TDataset):
                 
             ds = np.memmap(tiny_bin, dtype=np.uint16, mode='r')
             ds_idx = list(range(ds.shape[-1]-self.d_seq)) # 338035
-            if n != 338035: 
-                 ds_idx = list(np.random.choice(ds_idx, size=n, replace=False))
             ds.flush()
             self.ds_idx = ds_idx
         else:
-            ds = self.prompt(prompt)
+            ds = self.encoding.encode_ordinary(prompt)
+            ds = np.array(ds, dtype=np.uint16)
             self.ds_idx = [0]
+            self.d_seq = ds.shape[0] - 2
 
-        print('len(self.ds_idx): ', len(self.ds_idx))
-        print('ds.nbytes: ', ds.nbytes)
-        return ds
+        print('len(ds): ', len(ds))
+        return ds.copy()
         
