@@ -53,4 +53,11 @@ class TinyShakes(TDataset):
 
         print('len(ds): ', len(ds))
         return ds.copy()
+    
+    def prompt(self, prompt):
+        ds = self.encoding.encode_ordinary(prompt)
+        ds = np.array(ds, dtype=np.uint16)
+        self.ds_idx = [0]
+        self.d_seq = ds.shape[0] - 2
+        return ds.copy()
         
