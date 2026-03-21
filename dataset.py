@@ -15,22 +15,22 @@ class TinyShakes(TDataset):
     """
     https://github.com/karpathy/nanoGPT
     """      
-    def load_data(self, d_seq=1, n=338035, prompt=None, tokenizer=tiktoken):
+    def load_data(self, dir='./data', d_seq=1, n=338035, prompt=None, tokenizer=tiktoken):
         data_url = 'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt'
         self.encoding = tokenizer.get_encoding("gpt2")
-        self.d_seq, self.n = d_seq, n
-        tiny_bin = './data/tinyshakes_stripped_encoded.bin'
+        self.d_seq, self.n, self.dir = d_seq, n, dir
+        tiny_bin = os.path.join(self.dir, 'tinyshakes_stripped_encoded.bin')
 
         if prompt == None:
-            if not os.path.exists('./data/tinyshakes.txt'):
-                with open('./data/tinyshakes.txt', 'w', encoding='utf-8') as f:
+            if not os.path.exists(os.path.join(self.dir, 'tinyshakes.txt')):
+                with open(os.path.join(self.dir, 'tinyshakes.txt'), 'w', encoding='utf-8') as f:
                     f.write(requests.get(data_url).text)
                 print('tinyshakes.txt downloaded and saved in ../gpt/data/')
             else:
                 print('tinyshakes.txt loaded from saved file in ../gpt/data/')
     
             if not os.path.exists(tiny_bin):
-                with open('./data/tinyshakes.txt', 'r', encoding='utf-8') as f:
+                with open(os.path.join(self.dir, 'tinyshakes.txt'), 'r', encoding='utf-8') as f:
                     data = f.read()
                     data = data.replace('\n', ' ')
                 # encode with tiktoken gpt2 bpe
