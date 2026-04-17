@@ -17,13 +17,16 @@ class TinyShakes(TDataset):
     https://github.com/karpathy/nanoGPT
     """      
     def load_data(self, dir='./data', d_seq=100, n=338035, prompt=None, tokenizer=tiktoken):
-        # n=338035 total totkens
+        # n = 338035 total tokens
         data_url = 'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt'
         self.encoding = tokenizer.get_encoding("gpt2")
         self.n, self.d_seq, self.dir = n, d_seq, dir
         tiny_bin = os.path.join(self.dir, 'tinyshakes_stripped_encoded.bin')
 
-        if prompt == None:
+        if prompt is None: # pre-loading awaiting prompt input for inference 
+            self.ds_idx = [0]
+            return {}
+        elif prompt is False: # load dataset for training
             if not os.path.exists(os.path.join(self.dir, 'tinyshakes.txt')):
                 with open(os.path.join(self.dir, 'tinyshakes.txt'), 'w', encoding='utf-8') as f:
                     f.write(requests.get(data_url).text)
@@ -49,9 +52,9 @@ class TinyShakes(TDataset):
                 logger.info(f"TinyShakes.load_data error mapping file: {e}")
                 raise RuntimeError(f"TinyShakes.load_data failed to load dataset at {tiny_bin}.")
 
-            ds_idx = list(range(self.n-self.d_seq)) # 338035
+            ds_idx = list(range(self.n-self.d_seq))
             self.ds_idx = ds_idx
-        else:
+        else: # prompt provided for inference, encode and return dataset
             ds = self.encoding.encode_ordinary(prompt)
             ds = np.array(ds, dtype=np.uint16)
             self.ds_idx = [0]
