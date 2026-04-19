@@ -25,7 +25,7 @@ class TinyShakes(TDataset):
 
         if prompt is None: # pre-loading awaiting prompt input for inference 
             self.ds_idx = [0]
-            return {}
+            return {0: 'TinyShakes dataset loaded and ready for inference. Awaiting prompt input.'}
         elif prompt is False: # load dataset for training
             if not os.path.exists(os.path.join(self.dir, 'tinyshakes.txt')):
                 with open(os.path.join(self.dir, 'tinyshakes.txt'), 'w', encoding='utf-8') as f:
@@ -57,6 +57,7 @@ class TinyShakes(TDataset):
         else: # prompt provided for inference, encode and return dataset
             ds = self.encoding.encode_ordinary(prompt)
             ds = np.array(ds, dtype=np.uint16)
+            self.d_seq = ds.shape[0]
             self.ds_idx = [0]
 
         return ds.copy()
@@ -64,6 +65,7 @@ class TinyShakes(TDataset):
     def prompt(self, prompt):
         ds = self.encoding.encode_ordinary(prompt)
         ds = np.array(ds, dtype=np.uint16)
+        self.d_seq = ds.shape[0]
         self.ds_idx = [0]
         return ds.copy()
-        
+
