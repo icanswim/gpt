@@ -1,6 +1,7 @@
 import sys # required for relative imports in jupyter lab
 sys.path.insert(0, '../')
 import logging
+import random
 import os
 import requests
 import tiktoken
@@ -16,8 +17,8 @@ class TinyShakes(TDataset):
     """
     https://github.com/karpathy/nanoGPT
     """      
-    def load_data(self, dir='./data', d_seq=100, n=338035, prompt=None, tokenizer=tiktoken):
-        # n = 338035 total tokens
+    def load_data(self, dir='./data', d_seq=10, n=301306, prompt=None, tokenizer=tiktoken):
+        # n = 301306 total tokens
         data_url = 'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt'
         self.encoding = tokenizer.get_encoding("gpt2")
         self.n, self.d_seq, self.dir = n, d_seq, dir
@@ -52,8 +53,11 @@ class TinyShakes(TDataset):
                 logger.info(f"TinyShakes.load_data error mapping file: {e}")
                 raise RuntimeError(f"TinyShakes.load_data failed to load dataset at {tiny_bin}.")
 
-            ds_idx = list(range(self.n-self.d_seq))
-            self.ds_idx = ds_idx
+            if self.n < len(ds):
+                rand_start = random.randint(0, len(ds) - self.n - 1)
+                self.ds_idx = list(range(rand_start, rand_start + self.n - self.d_seq - 1))
+            else:
+                self.ds_idx = list(range(len(ds) - self.d_seq - 1))
         else: # prompt provided for inference, encode and return dataset
             ds = self.encoding.encode_ordinary(prompt)
             ds = np.array(ds, dtype=np.uint16)
